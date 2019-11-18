@@ -4,6 +4,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 import gym
+from collections import namedtuple
+
+Transition = namedtuple('Transition', ('phi', 'action', 'reward', 'phi_next', 'done'))
 
 class Net(nn.module):
     def __init__(self,
@@ -31,7 +34,11 @@ class Net(nn.module):
         return action_values
 
 class DQN(object):
-    def __init__(self, state_dim, num_action, alpha, C):
+    def __init__(self,
+                 state_dim=(84, 84, 4),
+                 num_action=18,
+                 alpha=0.01,
+                 C=4):
         self.targetNet = Net(state_dim, num_action)
         self.evalNet = Net(state_dim, num_action)
 
@@ -61,6 +68,20 @@ class DQN(object):
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
+
+
+def batch_wrapper(transBatch: np.array
+                  ):
+    batch = Transition(*zip(*transBatch))
+    phiBatch = torch.cat(batch.phi)
+    actionBatch = torch.cat(batch.action)
+    rewardBatch = torch.cat(batch.reward)
+    phiNextBatch = torch.cat(batch.phi_next)
+    doneBatch = torch.cat(batch.done)
+
+    return phiBatch, actionBatch, rewardBatch, phiNextBatch, doneBatch
+
+
 
 
 
