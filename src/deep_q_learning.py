@@ -22,9 +22,6 @@ C = 4
 # Initialize the pre-processing function phi
 phi = Phi()
 
-# Initialize the behavior policy
-pi = epsilon_greedy()
-
 # Initialize experience replay buffer
 buffer = replay_buffer()
 
@@ -37,13 +34,16 @@ Q = DQN(state_dim=state_dim,
         alpha=ALPHA,
         C=C)
 
+# Initialize the behavior policy
+pi = epsilon_greedy(Q)
+
 for episode in range(0, num_episode):
     x = env.reset()  # first frame
     s = [x]          # Initialize the sequence
 
     for t in count():
         p = phi(s)   # get phi_t
-        a = pi(phi(s), DQN.evalNet)
+        a = pi(phi(s))
 
         x, r, done, _ = env.step(a)
         s.append(a)

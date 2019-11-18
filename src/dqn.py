@@ -48,31 +48,57 @@ class DQN(object):
         self.optimizer = torch.optim.Adam(self.evalNet.parameters(), lr=alpha)
         self.loss_func = nn.MSELoss()
 
-    def eval(self, phi):
+    def eval(self, phi, action):
+        """
+        inp:
+            phi: input of nn, shape of [BATCHSIZE, 84, 84, 4]
+            action: sampled actions, shape of [BATCHSIZE, ]
+        return:
+            q_values: values of each (s, a), shape of [BATCHSIZE, ]
+        """
         phi = torch.unsqueeze(torch.FloatTensor(phi), 0)
-        return self.evalNet(phi)
+        q_values = self.evalNet(phi).gather(1, action)
+        return q_values
 
-    def target(self, phi):
+    def target(self, phi, action):
         phi = torch.unsqueeze(torch.FloatTensor(phi), 0)
-        return self.targetNet(phi)
+        q_values = self.targetNet(phi).gather(1, action)
+        return q_values
 
     def update(self,
                phiBatch: torch.Tensor,
+               actionBatch: torch.Tensor,
                targetBatch: torch.Tensor):
         if self.learnCounter == 0:
             self.targetNet.load_state_dict(self.evalNet.state_dict())
         self.learnCounter  = (self.learnCounter + 1) % self.C
 
-        prediction = self.evalNet(phiBatch)
+        prediction = self.eval(phiBatch, actionBatch)
         loss = self.loss_func(prediction, targetBatch)
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
 
+    def epsilon_greedy(self,
+                       phi,
+                       epsilon=0.1):
+
+        if np.random.rand() > epsilon:
+            action_value = self.evalNet.forward(phi)
+            action = torch.max(action_value, 1)[1].data.numpy()[0, 0]
+        else:
+            action = np.random.randint(0, num_action)
+        return action
+
+
+
 
 def batch_wrapper(transBatch: np.array
                   ):
     batch = Transition(*zip(*transBatch))
+    # Transpose the batch (see https://stackoverflow.com/a/19343/3343043 for
+    # detailed explanation). This converts batch-array of Transitions
+    # to Transition of batch-arrays.
     phiBatch = torch.cat(batch.phi)
     actionBatch = torch.cat(batch.action)
     rewardBatch = torch.cat(batch.reward)
@@ -80,6 +106,7 @@ def batch_wrapper(transBatch: np.array
     doneBatch = torch.cat(batch.done)
 
     return phiBatch, actionBatch, rewardBatch, phiNextBatch, doneBatch
+
 
 
 
