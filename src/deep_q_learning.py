@@ -5,12 +5,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 import gym
-from dqn import DQN
+from src.dqn import DQN
 
 env = gym.make('CartPole-v0')
 
 # Initialize the behavior policy
-pi = eplsilon_greedy()
+pi = epsilon_greedy()
 
 # Initialize experience replay buffer
 
