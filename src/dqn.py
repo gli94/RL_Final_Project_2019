@@ -8,7 +8,8 @@ from collections import namedtuple
 
 Transition = namedtuple('Transition', ('phi', 'action', 'reward', 'phi_next', 'done'))
 
-class Net(nn.module):
+
+class Net(nn.Module):
     def __init__(self,
                  state_dim=(84, 84, 4),
                  num_action=18):
@@ -18,19 +19,19 @@ class Net(nn.module):
         """
 
         super(Net, self).__init__()
-        self.fc1 = nn.linear(state_dim, 10)
-        self.fc1.weight.data.normal(0, 0.1)
-        self.out = nn.Linear(10, num_action)
-        self.out.weight.data.normal(0, 0.1)
+        self.fc1 = nn.Linear(state_dim, 50)
+        self.fc1.weight.data.normal_(0, 0.1)
+        self.out = nn.Linear(50, num_action)
+        self.out.weight.data.normal_(0, 0.1)
 
     def forward(self,
-                phi: torch.Tensor):
+                x: torch.Tensor):
         """
         phi: nn input dimension, shape being [84, 84, 4]
         """
-        phi = self.fc1(phi)
-        phi = F.relu(phi)
-        action_values = self.out(phi)
+        x = self.fc1(x)
+        x = F.relu(x)
+        action_values = self.out(x)
         return action_values
 
 class DQN(object):
@@ -39,6 +40,9 @@ class DQN(object):
                  num_action=18,
                  alpha=0.01,
                  C=4):
+        self.state_dim = state_dim
+        self.num_action = num_action
+
         self.targetNet = Net(state_dim, num_action)
         self.evalNet = Net(state_dim, num_action)
 
@@ -84,13 +88,11 @@ class DQN(object):
                        epsilon=0.1):
 
         if np.random.rand() > epsilon:
-            action_value = self.evalNet.forward(phi)
+            action_value = self.evalNet(phi)
             action = torch.max(action_value, 1)[1].data.numpy()[0, 0]
         else:
-            action = np.random.randint(0, num_action)
+            action = np.random.randint(0, self.num_action)
         return action
-
-
 
 
 def batch_wrapper(transBatch: np.array
@@ -99,13 +101,23 @@ def batch_wrapper(transBatch: np.array
     # Transpose the batch (see https://stackoverflow.com/a/19343/3343043 for
     # detailed explanation). This converts batch-array of Transitions
     # to Transition of batch-arrays.
-    phiBatch = torch.cat(batch.phi)
-    actionBatch = torch.cat(batch.action)
-    rewardBatch = torch.cat(batch.reward)
-    phiNextBatch = torch.cat(batch.phi_next)
-    doneBatch = torch.cat(batch.done)
+    phiBatch = torch.from_numpy(batch.phi)
+    actionBatch = torch.from_numpy(batch.action)
+    rewardBatch = torch.from_numpy(batch.reward)
+    phiNextBatch = torch.from_numpy(batch.phi_next)
+    doneBatch = torch.from_numpy(batch.done)
+    # actionBatch = torch.cat(batch.action)
+    # rewardBatch = torch.cat(batch.reward)
+    # phiNextBatch = torch.cat(batch.phi_next)
+    # doneBatch = torch.cat(batch.done)
+
 
     return phiBatch, actionBatch, rewardBatch, phiNextBatch, doneBatch
+
+
+def Phi(s):
+    p = torch.from_numpy(s[-1])
+    return p
 
 
 

@@ -7,7 +7,7 @@ import numpy as np
 import gym
 from itertools import count
 from src.dqn import DQN
-from src.dqn import batch_wrapper
+from src.dqn import batch_wrapper, Phi
 from sources.replay_buffer import replay_buffer
 
 env = gym.make('CartPole-v0')
@@ -15,40 +15,44 @@ env = gym.make('CartPole-v0')
 # Hyper Parameters
 num_episode = 400
 BATCH_SIZE = 32
+CAPACITY_SIZE = 10000
 GAMMA = 0.99
 ALPHA = 0.01
 C = 4
+N_ACTIONS = env.action_space.n
+STATE_DIM = env.observation_space.shape[0]
+
 
 # Initialize the pre-processing function phi
-phi = Phi()
+# phi = Phi()
 
 # Initialize experience replay buffer
-buffer = replay_buffer()
+buffer = replay_buffer(CAPACITY_SIZE)
 
 # Initialize the targetNet and evalNet
-state_dim = (84, 84, 4)
-num_action = 18
+# state_dim = (84, 84, 4)
+# num_action = 18
 
-Q = DQN(state_dim=state_dim,
-        num_action=num_action,
+Q = DQN(state_dim=STATE_DIM,
+        num_action=N_ACTIONS,
         alpha=ALPHA,
         C=C)
 
 # Initialize the behavior policy
-pi = epsilon_greedy(Q)
+# pi = epsilon_greedy(Q)
 
 for episode in range(0, num_episode):
     x = env.reset()  # first frame
     s = [x]          # Initialize the sequence
 
     for t in count():
-        p = phi(s)   # get phi_t
-        a = pi(phi(s))
+        p = Phi(s)   # get phi_t
+        a = Q.epsilon_greedy(p)
 
         x, r, done, _ = env.step(a)
-        s.append(a)
+        # s.append(a) # can't quite get why a is stored into the sequence
         s.append(x)  # get s_{t+1}
-        p_next = phi(s)  # get phi_{t+1}
+        p_next = Phi(s)  # get phi_{t+1}
 
         buffer.store(p, a, r, p_next, done)
         transBatch = buffer.sample(BATCH_SIZE)  # get a np.array
