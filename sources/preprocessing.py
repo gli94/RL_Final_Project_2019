@@ -55,7 +55,6 @@ def phi(seq,
                 current_processed_img[ii][jj] = pixel_block.sum()/pixel_block.size
                 
         img_stack[np.int64((idx-1)/2)] = current_processed_img
-        print(img_stack)
     
     return torch.from_numpy(img_stack)
                 
