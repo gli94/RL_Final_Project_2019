@@ -33,10 +33,27 @@ print(action_values)
 
 ################################
 
-transBatch = [([1, 1, 1, 1], 2, 3, [1, 2, 2, 2], True)]
+transBatch = [([1, 1, 1, 1], 2, 3, [1, 2, 2, 2], False),
+              ([1, 1, 2, 1], 4, 5, [1, 3, 3, 3], True)
+              ]
 phiBatch, actionBatch, rewardBatch, phiNextBatch, doneBatch = batch_wrapper(transBatch)
 print("phiBatch=", phiBatch)
 print("actionBatch=", actionBatch)
 print("rewardBatch", rewardBatch)
 print("phiNextBatch=", phiNextBatch)
 print("doneBatch=", doneBatch)
+
+# nonFinalMask = torch.tensor(tuple(map(lambda m: m is not True, doneBatch)), dtype=torch.uint8)
+d = map(lambda m: m is not True, doneBatch)
+
+nonFinalMask = torch.tensor(tuple(map(lambda m: m is not True, doneBatch)), dtype=torch.bool)
+nextQ_Batch = torch.zeros(2)
+input = phiNextBatch[nonFinalMask].float()
+x = torch.unsqueeze(torch.linspace(-1, 1, 100), dim=1)
+print(x.type())
+print(input.type())
+NextQ_value = Q.targetNet(input)
+print(NextQ_value)
+print("size = ", NextQ_value.size().)
+result = NextQ_value.max(1)[0].detach()
+print(result)

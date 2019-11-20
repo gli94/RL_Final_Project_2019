@@ -60,12 +60,13 @@ class DQN(object):
         return:
             q_values: values of each (s, a), shape of [BATCHSIZE, ]
         """
-        phi = torch.unsqueeze(torch.FloatTensor(phi), 0)
+        # phi = torch.unsqueeze(torch.FloatTensor(phi), 0)
+        nnOuput = self.evalNet(phi)
         q_values = self.evalNet(phi).gather(1, action)
         return q_values
 
     def target(self, phi, action):
-        phi = torch.unsqueeze(torch.FloatTensor(phi), 0)
+        # phi = torch.unsqueeze(torch.FloatTensor(phi), 0)
         q_values = self.targetNet(phi).gather(1, action)
         return q_values
 
@@ -115,8 +116,9 @@ def batch_wrapper(transBatch: np.array
     phiNextBatch = np.asarray(batch.phi_next)
     phiNextBatch = torch.from_numpy(phiNextBatch)
 
-    doneBatch = np.asarray(batch.done)
-    doneBatch = torch.from_numpy(doneBatch)
+    # doneBatch = np.asarray(batch.done)
+    # doneBatch = torch.from_numpy(doneBatch)
+    doneBatch = batch.done
 
     # actionBatch = torch.cat(batch.action)
     # rewardBatch = torch.cat(batch.reward)

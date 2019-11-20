@@ -60,12 +60,19 @@ for episode in range(0, num_episode):
         nonFinalMask = torch.tensor(tuple(map(lambda m: m is not True, doneBatch)), dtype=torch.uint8)
 
         # Q_value update: if next phi terminates, target is reward; else is reward + gamma * max(Q(phi_next, a'))
-        nextQ_Batch = torch.zeros(BATCH_SIZE)
-        nextQ_Batch[nonFinalMask] = Q.targetNet(phiNextBatch(nonFinalMask)).max(1)[0].detach()
+        # nextQ_Batch = torch.zeros(BATCH_SIZE)
+        nextQ_Batch = torch.zeros(phiBatch.size()[0])
+        # nextQ_Batch[nonFinalMask] = Q.targetNet(phiNextBatch[nonFinalMask].float()).max(1)[0].detach()
+        nnInput = phiNextBatch[nonFinalMask].float()
+        nnOutput = Q.targetNet(nnInput)
+        nextQ_Batch[nonFinalMask] = nnOutput.max(1)[0].detach()
         targetBatch = (nextQ_Batch * GAMMA) + rewardBatch
-
+        print("phi=", phiBatch.type())
+        print("action=", actionBatch)
+        print("target=", targetBatch.type())
         # update evalNet every time; update targetNet every C time
-        Q.update(phiBatch, targetBatch)
+        x = phiBatch.float()
+        Q.update(phiBatch.float(), actionBatch, targetBatch)
 
         if done:
             break
