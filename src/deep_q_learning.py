@@ -45,11 +45,14 @@ for episode in range(0, num_episode):
     x = env.reset()  # first frame
     s = [x]          # Initialize the sequence
 
+    G = 0
     for t in count():
         p = Phi(s)   # get phi_t
+        env.render()
         a = Q.epsilon_greedy(p)
 
         x, r, done, _ = env.step(a)
+        G += r
         # s.append(a) # can't quite get why a is stored into the sequence
         s.append(x)  # get s_{t+1}
         p_next = Phi(s)  # get phi_{t+1}
@@ -57,22 +60,32 @@ for episode in range(0, num_episode):
         buffer.store(p, a, r, p_next, done)
         transBatch = buffer.sample(BATCH_SIZE)  # get a np.array
         phiBatch, actionBatch, rewardBatch, phiNextBatch, doneBatch = batch_wrapper(transBatch)  # retrieve tensor batch
-        nonFinalMask = torch.tensor(tuple(map(lambda m: m is not True, doneBatch)), dtype=torch.uint8)
+        nonFinalMask = torch.tensor(tuple(map(lambda m: m is not True, doneBatch)), dtype=torch.bool)
+
+        # nonFinalMask = torch.unsqueeze(nonFinalMask, 1)  # nonFinalMask shape (N, 1)
 
         # Q_value update: if next phi terminates, target is reward; else is reward + gamma * max(Q(phi_next, a'))
         # nextQ_Batch = torch.zeros(BATCH_SIZE)
         nextQ_Batch = torch.zeros(phiBatch.size()[0])
+        nextQ_Batch = torch.unsqueeze(nextQ_Batch, 1)  # nextQ_Batch shape(N, 1)
         # nextQ_Batch[nonFinalMask] = Q.targetNet(phiNextBatch[nonFinalMask].float()).max(1)[0].detach()
         nnInput = phiNextBatch[nonFinalMask].float()
-        nnOutput = Q.targetNet(nnInput)
-        nextQ_Batch[nonFinalMask] = nnOutput.max(1)[0].detach()
+        nnOutput = Q.targetNet(nnInput)   # size[N, 1]
+        denig = nnOutput.max(1)[0].detach() # [N]
+        denig = torch.unsqueeze(denig, 1)
+        d = nextQ_Batch[nonFinalMask]
+        nextQ_Batch[nonFinalMask] = denig
+
         targetBatch = (nextQ_Batch * GAMMA) + rewardBatch
-        print("phi=", phiBatch.type())
-        print("action=", actionBatch)
-        print("target=", targetBatch.type())
-        # update evalNet every time; update targetNet every C time
-        x = phiBatch.float()
-        Q.update(phiBatch.float(), actionBatch, targetBatch)
+        # targetBatch = torch.unsqueeze(targetBatch, 1)
+
+        Q.update(phiBatch.float(), actionBatch, targetBatch.float())
+        shape1 = phiBatch.size()
+        shape2 = actionBatch.size()
+        shape3 = targetBatch.size()
+        shape4 = rewardBatch.size()
+        shape5 = nextQ_Batch.size()
 
         if done:
             break
+    print('episode:', episode, 'return', G)

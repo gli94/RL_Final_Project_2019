@@ -61,6 +61,7 @@ class DQN(object):
             q_values: values of each (s, a), shape of [BATCHSIZE, ]
         """
         # phi = torch.unsqueeze(torch.FloatTensor(phi), 0)
+        # action = torch.unsqueeze(action, 0)
         nnOuput = self.evalNet(phi)
         q_values = self.evalNet(phi).gather(1, action)
         return q_values
@@ -100,21 +101,42 @@ class DQN(object):
 
 def batch_wrapper(transBatch: np.array
                   ):
+    """
+    inp:
+        transBatch: ndarrays of tuples, tuples being [phi, action, reward, phiNext, done]
+        phi of size (BATCHSIZE, 4), dtype = int64
+        action of size(BATCHSIZE), dtype = int64
+        reward of size(BATCHSIZE), dtype = int64
+        phiNext of size(BATCHSIZE, 4), dtype = int64
+        done of size(BATCHSIZE), dtype = boolean
+    return:
+        phiBatch of size(BATCHSIZE, 4), dtype = float_tensor
+        actionBatch of size(BATCHSIZE, 1), dtype = long_tensor
+        rewardBatch of size(BATCHSIZE, 1), dtype = float_tensor
+        phiNextBatch of size(BATCHSIZE, 4), dtype = float_tensor
+        done of size (BATCHSIZE), a tuple of booleans
+    """
     batch = Transition(*zip(*transBatch))
     # Transpose the batch (see https://stackoverflow.com/a/19343/3343043 for
     # detailed explanation). This converts batch-array of Transitions
     # to Transition of batch-arrays.
     phiBatch = np.asarray(batch.phi)
     phiBatch = torch.from_numpy(phiBatch)
+    phiBatch = phiBatch.float()
 
     actionBatch = np.asarray(batch.action)
     actionBatch = torch.from_numpy(actionBatch)
+    actionBatch = torch.unsqueeze(actionBatch, 1)
+    actionBatch = actionBatch.long()
 
     rewardBatch = np.asarray(batch.reward)
     rewardBatch = torch.from_numpy(rewardBatch)
+    rewardBatch = torch.unsqueeze(rewardBatch, 1)
+    rewardBatch = rewardBatch.float()
 
     phiNextBatch = np.asarray(batch.phi_next)
     phiNextBatch = torch.from_numpy(phiNextBatch)
+    phiNextBatch = phiNextBatch.float()
 
     # doneBatch = np.asarray(batch.done)
     # doneBatch = torch.from_numpy(doneBatch)
