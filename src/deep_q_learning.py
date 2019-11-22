@@ -8,14 +8,22 @@ import gym
 from itertools import count
 from src.dqn import DQN
 from src.dqn import batch_wrapper, Phi
+
 from sources.replay_buffer import replay_buffer
+<<<<<<< HEAD
 <<<<<<< HEAD
 from sources.preprocessing import phi
 =======
 import matplotlib.pyplot as plt
 >>>>>>> cdcde89227cefbf02a91ee115489782569b3604e
+=======
 
-env = gym.make('CartPole-v0')
+from sources.preprocessing import phi
+>>>>>>> be7a7e61de86d28d02df87e99b501992d8450582
+
+
+# env = gym.make('CartPole-v0')
+env = gym.make('Boxing-v0')
 
 # Hyper Parameters
 num_episode = 400
@@ -54,15 +62,26 @@ for episode in range(0, num_episode):
 
     G = 0
     for t in count():
-        p = Phi(s)       # get phi_t
+        # p = Phi(s)       # get phi_t
+
+        # don't do anything in first 4 frames
+        if t < 5:
+            a = np.random.randint(0, N_ACTIONS)
+            x, r, done, _ = env.step(a)
+            s.append(a)
+            s.append(x)
+            continue
+
+        p = phi(s)
         # env.render()
         a = Q.epsilon_greedy(p)
 
         x, r, done, _ = env.step(a)
         G += r
-        # s.append(a) # can't quite get why a is stored into the sequence
+        s.append(a) # can't quite get why a is stored into the sequence
         s.append(x)      # get s_{t+1}
-        p_next = Phi(s)  # get phi_{t+1}
+        # p_next = Phi(s)  # get phi_{t+1}
+        p_next = phi(s)
 
         buffer.store(p, a, r, p_next, done)
         transBatch = buffer.sample(BATCH_SIZE)     # get a np.array
@@ -90,10 +109,16 @@ for episode in range(0, num_episode):
         # shape3 = targetBatch.size()
         # shape4 = rewardBatch.size()
         # shape5 = nextQ_Batch.size()
+        print(t)
 
         if done:
             break
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     print('episode:', episode, 'return', G)
 >>>>>>> cdcde89227cefbf02a91ee115489782569b3604e
+=======
+
+    print('episode:', episode, 'return', G)
+>>>>>>> be7a7e61de86d28d02df87e99b501992d8450582
