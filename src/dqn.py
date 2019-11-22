@@ -127,7 +127,7 @@ def batch_wrapper(transBatch: np.array
     actionBatch = np.asarray(batch.action)
     actionBatch = torch.from_numpy(actionBatch)
     actionBatch = torch.unsqueeze(actionBatch, 1)
-    actionBatch = actionBatch.long()
+    actionBatch = actionBatch.long()  # gather function takes in long tensor
 
     rewardBatch = np.asarray(batch.reward)
     rewardBatch = torch.from_numpy(rewardBatch)
@@ -138,15 +138,7 @@ def batch_wrapper(transBatch: np.array
     phiNextBatch = torch.from_numpy(phiNextBatch)
     phiNextBatch = phiNextBatch.float()
 
-    # doneBatch = np.asarray(batch.done)
-    # doneBatch = torch.from_numpy(doneBatch)
     doneBatch = batch.done
-
-    # actionBatch = torch.cat(batch.action)
-    # rewardBatch = torch.cat(batch.reward)
-    # phiNextBatch = torch.cat(batch.phi_next)
-    # doneBatch = torch.cat(batch.done)
-
 
     return phiBatch, actionBatch, rewardBatch, phiNextBatch, doneBatch
 
