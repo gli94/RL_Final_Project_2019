@@ -104,7 +104,5 @@ for episode in range(0, num_episode):
 
         if done:
             break
-<<<<<<< HEAD
+
     print('episode:', episode, 'return', G)
-=======
->>>>>>> master
