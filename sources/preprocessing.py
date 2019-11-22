@@ -11,7 +11,7 @@ def phi(seq,
     Use avg_pool
     """
     img_shape = np.shape(seq[-1])
-    img_stack = np.zeros((stack_num, stack_img_h, stack_img_w))
+    img_stack = np.zeros((stack_img_h, stack_img_w, stack_num))
     filter_h = int(img_shape[0] / stack_img_h)
     filter_w = int(img_shape[1] / stack_img_w)
     stride_h = filter_h
@@ -22,12 +22,17 @@ def phi(seq,
     
     if 2 * stack_num - 1 > len(seq):
         stack_num_return = int((len(seq) + 1)/2)
+        print("Warning: The image frames in the seqence is less than the required stack number!!!")
     else:
         stack_num_return = stack_num
         
     for idx in range(1, 1+2*stack_num_return, 2):
         current_frame = seq[0-idx]
-        prev_frame = seq[0-(idx+2)]
+        
+        if len(seq) > 1:
+            prev_frame = seq[0-(idx+2)]
+        else:
+            prev_frame = np.zeros(img_shape)
         
         for i in range(img_shape[0]):
             for j in range(img_shape[1]):
@@ -53,8 +58,7 @@ def phi(seq,
                     pixel_block[0:img_shape[0] - ii * stride_h, 0:img_shape[1] - jj * stride_w] = current_gray_image[ii * stride_h : img_shape[0], jj * stride_w : img_shape[1]]
                     
                 current_processed_img[ii][jj] = pixel_block.sum()/pixel_block.size
-                
-        img_stack[np.int64((idx-1)/2)] = current_processed_img
+                img_stack[ii][jj][np.int64((idx-1)/2)] = current_processed_img[ii][jj]
     
     return torch.from_numpy(img_stack)
                 
