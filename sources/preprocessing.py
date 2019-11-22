@@ -11,7 +11,7 @@ def phi(seq,
     Use avg_pool
     """
     img_shape = np.shape(seq[-1])
-    img_stack = np.zeros((stack_img_h, stack_img_w, stack_num))
+    img_stack = np.zeros((stack_num, stack_img_h, stack_img_w))
     filter_h = int(img_shape[0] / stack_img_h)
     filter_w = int(img_shape[1] / stack_img_w)
     stride_h = filter_h
@@ -58,9 +58,10 @@ def phi(seq,
                     pixel_block[0:img_shape[0] - ii * stride_h, 0:img_shape[1] - jj * stride_w] = current_gray_image[ii * stride_h : img_shape[0], jj * stride_w : img_shape[1]]
                     
                 current_processed_img[ii][jj] = pixel_block.sum()/pixel_block.size
-                img_stack[ii][jj][np.int64((idx-1)/2)] = current_processed_img[ii][jj]
+
+        img_stack[np.int64((idx-1)/2)] = current_processed_img
     
-    return torch.from_numpy(img_stack)
+    return img_stack
                 
         
         

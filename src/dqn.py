@@ -48,12 +48,13 @@ class ConvNet(nn.Module):
         self.bn1 = nn.BatchNorm2d(16)
         self.conv2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=4, stride=2)
         self.bn2 = nn.BatchNorm2d(32)
-        self.fc1 = nn.Linear(32 * 4 * 4, 256)
+        self.fc1 = nn.Linear(32 * 9 * 9, 256)
         self.output = nn.Linear(256, num_action)
 
     def forward(self, x):
         x = F.relu(self.bn1(self.conv1(x)))
         x = F.relu(self.bn2(self.conv2(x)))
+        x = x.view(-1, 32 * 9 * 9)
         x = F.relu(self.fc1(x))
         x = self.output(x)
 
@@ -118,11 +119,12 @@ class DQN(object):
                        phi,
                        epsilon=0.1):
         # TODO: use a decaying epsilon
-        # phi = torch.from_numpy(phi).type(torch.FloatTensor)
+        phi = torch.from_numpy(phi).type(torch.FloatTensor)
+        phi = phi.unsqueeze(0)
 
         if np.random.rand() > epsilon:
             action_value = self.evalNet(phi)
-            value, action = action_value.max(0)
+            value, action = action_value.max(1)
             action = action.item()
         else:
             action = np.random.randint(0, self.num_action)

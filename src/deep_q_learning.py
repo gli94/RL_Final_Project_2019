@@ -8,7 +8,7 @@ import gym
 from itertools import count
 from src.dqn import DQN
 from src.dqn import batch_wrapper, Phi
-from sources.preprocessing import phi
+
 from sources.replay_buffer import replay_buffer
 
 from sources.preprocessing import phi
@@ -101,6 +101,7 @@ for episode in range(0, num_episode):
         # shape3 = targetBatch.size()
         # shape4 = rewardBatch.size()
         # shape5 = nextQ_Batch.size()
+        print(t)
 
         if done:
             break
