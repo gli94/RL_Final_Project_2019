@@ -9,13 +9,35 @@
 from sources.preprocessing import phi
 import numpy as np
 import torch
+import gym
 
-a = np.ones((210, 160, 3))
-seq = [a,0,2*a,0,3*a,0,4*a,0,5*a]
+#a = np.ones((210, 160, 3))
+#seq = [a,0,2*a,0,3*a,0,4*a,0,5*a]
 
-b = phi(seq, 4, 105, 80)
+#b = phi(seq, 4, 105, 80)
 
-print(b.shape)
+env = gym.make('Boxing-v0')
+state = env.reset()
+print(state.shape)
+
+seq = [state]
+b = phi(seq,1)
 print(b)
+print(b.shape)
+
+for _ in range(100):
+    env.render()
+    action = env.action_space.sample()
+    seq.append(action)
+    state, r, done, info = env.step(action)
+    seq.append(state)
+
+print(len(seq))
+
+b = phi(seq, 1)
+
+print(b)
+print(b.shape)
+    
 
 

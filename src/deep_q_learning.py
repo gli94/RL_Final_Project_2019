@@ -10,7 +10,9 @@ from src.dqn import DQN
 from src.dqn import batch_wrapper, Phi
 from sources.preprocessing import phi
 from sources.replay_buffer import replay_buffer
-import matplotlib.pyplot as plt
+
+from sources.preprocessing import phi
+
 
 # env = gym.make('CartPole-v0')
 env = gym.make('Boxing-v0')
@@ -102,4 +104,7 @@ for episode in range(0, num_episode):
 
         if done:
             break
+<<<<<<< HEAD
     print('episode:', episode, 'return', G)
+=======
+>>>>>>> master
