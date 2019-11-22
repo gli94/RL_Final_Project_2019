@@ -6,7 +6,7 @@
 #	env.step(env.action_space.sample())
 #env.close()
 
-from preprocessing import phi
+from sources.preprocessing import phi
 import numpy as np
 import torch
 import gym

@@ -33,10 +33,31 @@ print(action_values)
 
 ################################
 
-transBatch = [([1, 1, 1, 1], 2, 3, [1, 2, 2, 2], True)]
+transBatch = [([1, 1, 1, 1], 2, 3, [1, 2, 2, 2], False),
+              ([1, 1, 2, 1], 4, 5, [1, 3, 3, 3], True)
+              ]
 phiBatch, actionBatch, rewardBatch, phiNextBatch, doneBatch = batch_wrapper(transBatch)
 print("phiBatch=", phiBatch)
+print("phiBatch size:", phiBatch.size())
 print("actionBatch=", actionBatch)
+print("actionBatch size:", actionBatch.size())
 print("rewardBatch", rewardBatch)
 print("phiNextBatch=", phiNextBatch)
 print("doneBatch=", doneBatch)
+
+# nonFinalMask = torch.tensor(tuple(map(lambda m: m is not True, doneBatch)), dtype=torch.uint8)
+d = map(lambda m: m is not True, doneBatch)
+
+nonFinalMask = torch.tensor(tuple(map(lambda m: m is not True, doneBatch)), dtype=torch.bool)
+nextQ_Batch = torch.zeros(2)
+input = phiNextBatch[nonFinalMask].float()
+
+nnOuput = torch.FloatTensor([[1, 2]])
+index = torch.LongTensor([[1]])
+q_values = nnOuput.gather(1, index)
+print(q_values)
+d = torch.rand(1, 2)
+c = d.max(1)
+print('d=', d)
+print('c=', c)
+
