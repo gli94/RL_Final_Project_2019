@@ -34,6 +34,33 @@ class Net(nn.Module):
         action_values = self.out(x)
         return action_values
 
+# First Convolution Layer: 16 8x8 filters with stride 4
+# ReLu
+# Second Convolution Layer: 32 4x4 filters with stride 2
+# ReLu
+# Third FC Layer: 256 units
+# ReLu
+# Ouput Layer
+class ConvNet(nn.Module):
+    def __init__(self):
+        super(ConvNet, self).__init__()
+        self.conv1 = nn.Conv2d(input, 6, 5)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(6, 16, 5)
+        self.fc1 = nn.Linear(16 * 5 * 5, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, 10)
+
+    def forward(self, x):
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = x.view(-1, 16 * 5 * 5)
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
+        return x
+
+
 class DQN(object):
     def __init__(self,
                  state_dim=(84, 84, 4),
@@ -49,7 +76,7 @@ class DQN(object):
         self.learnCounter = 0
         self.C = C          # Every C steps we clone evalNet to be targetNet
 
-        self.optimizer = torch.optim.Adam(self.evalNet.parameters(), lr=alpha)
+        self.optimizer = torch.optim.RMSprop(self.evalNet.parameters(), lr=alpha)
         self.loss_func = nn.MSELoss()
 
     def eval(self, phi, action):
@@ -88,6 +115,7 @@ class DQN(object):
     def epsilon_greedy(self,
                        phi,
                        epsilon=0.1):
+        # TODO: use a decaying epsilon
         phi = torch.from_numpy(phi).type(torch.FloatTensor)
 
         if np.random.rand() > epsilon:
