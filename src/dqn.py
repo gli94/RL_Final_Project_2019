@@ -40,24 +40,23 @@ class Net(nn.Module):
 # ReLu
 # Third FC Layer: 256 units
 # ReLu
-# Ouput Layer
+# Ouput Layer: output units = num_action
 class ConvNet(nn.Module):
-    def __init__(self):
+    def __init__(self, num_action):
         super(ConvNet, self).__init__()
-        self.conv1 = nn.Conv2d(input, 6, 5)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1 = nn.Linear(16 * 5 * 5, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 10)
+        self.conv1 = nn.Conv2d(in_channels=4, out_channels=16, kernel_size=8, stride=4)
+        self.bn1 = nn.BatchNorm2d(16)
+        self.conv2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=4, stride=2)
+        self.bn2 = nn.BatchNorm2d(32)
+        self.fc1 = nn.Linear(32 * 4 * 4, 256)
+        self.output = nn.Linear(256, num_action)
 
     def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = x.view(-1, 16 * 5 * 5)
+        x = F.relu(self.bn1(self.conv1(x)))
+        x = F.relu(self.bn2(self.conv2(x)))
         x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
+        x = self.output(x)
+
         return x
 
 
@@ -70,8 +69,11 @@ class DQN(object):
         self.state_dim = state_dim
         self.num_action = num_action
 
-        self.targetNet = Net(state_dim, num_action)
-        self.evalNet = Net(state_dim, num_action)
+        # self.targetNet = Net(state_dim, num_action)
+        # self.evalNet = Net(state_dim, num_action)
+
+        self.targetNet = ConvNet(num_action)
+        self.evalNet = ConvNet(num_action)
 
         self.learnCounter = 0
         self.C = C          # Every C steps we clone evalNet to be targetNet
@@ -116,7 +118,7 @@ class DQN(object):
                        phi,
                        epsilon=0.1):
         # TODO: use a decaying epsilon
-        phi = torch.from_numpy(phi).type(torch.FloatTensor)
+        # phi = torch.from_numpy(phi).type(torch.FloatTensor)
 
         if np.random.rand() > epsilon:
             action_value = self.evalNet(phi)
