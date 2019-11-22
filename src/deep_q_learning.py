@@ -9,6 +9,7 @@ from itertools import count
 from src.dqn import DQN
 from src.dqn import batch_wrapper, Phi
 from sources.replay_buffer import replay_buffer
+from sources.preprocessing import phi
 
 env = gym.make('CartPole-v0')
 
