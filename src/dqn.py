@@ -42,19 +42,29 @@ class Net(nn.Module):
 # ReLu
 # Ouput Layer: output units = num_action
 class ConvNet(nn.Module):
-    def __init__(self, num_action):
+    def __init__(self, num_action, height, width):
         super(ConvNet, self).__init__()
-        self.conv1 = nn.Conv2d(in_channels=4, out_channels=16, kernel_size=8, stride=4)
+        self.conv1 = nn.Conv2d(in_channels=4, out_channels=16, kernel_size=6, stride=2)
         self.bn1 = nn.BatchNorm2d(16)
         self.conv2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=4, stride=2)
         self.bn2 = nn.BatchNorm2d(32)
-        self.fc1 = nn.Linear(32 * 9 * 9, 256)
+
+        # compute the size of input to the fully connected layer
+        def conv2d_size_out(size, kernel_size=6, stride=2):
+            return (size - (kernel_size - 1) - 1) // stride + 1
+        conv_height = conv2d_size_out(conv2d_size_out(height, 6, 2), 4, 2)
+        conv_width = conv2d_size_out(conv2d_size_out(width, 6, 2), 4, 2)
+
+        self.fc1 = nn.Linear(32 * conv_height * conv_width, 256)
         self.output = nn.Linear(256, num_action)
+
+        self.conv_height = conv_height
+        self.conv_width = conv_width
 
     def forward(self, x):
         x = F.relu(self.bn1(self.conv1(x)))
         x = F.relu(self.bn2(self.conv2(x)))
-        x = x.view(-1, 32 * 9 * 9)
+        x = x.view(-1, 32 * self.conv_height * self.conv_width)
         x = F.relu(self.fc1(x))
         x = self.output(x)
 
@@ -66,15 +76,18 @@ class DQN(object):
                  state_dim=(84, 84, 4),
                  num_action=18,
                  alpha=0.01,
-                 C=4):
+                 C=4,
+                 height=84,
+                 width=84):
+
         self.state_dim = state_dim
         self.num_action = num_action
 
         # self.targetNet = Net(state_dim, num_action)
         # self.evalNet = Net(state_dim, num_action)
 
-        self.targetNet = ConvNet(num_action)
-        self.evalNet = ConvNet(num_action)
+        self.targetNet = ConvNet(num_action, height, width)
+        self.evalNet = ConvNet(num_action, height, width)
 
         self.learnCounter = 0
         self.C = C          # Every C steps we clone evalNet to be targetNet
