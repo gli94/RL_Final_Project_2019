@@ -67,15 +67,15 @@ for episode in range(0, num_episode):
             s.append(x)
             continue
 
-        start_time = time.time()
+        # start_time = time.time()
         p = phi(s, 4, HEIGHT, WIDTH)
-        print("\r--- %s seconds ---" % (time.time() - start_time))
+        # print("\r--- %s seconds ---" % (time.time() - start_time))
         # env.render()
 
         a = Q.epsilon_greedy(p)
         x, r, done, _ = env.step(a)
 
-        #TODO: reward clipping
+        # TODO: reward clipping
         G += r
         s.append(a)      # can't quite get why a is stored into the sequence
         s.append(x)      # get s_{t+1}
