@@ -10,16 +10,12 @@ from src.dqn import DQN
 from src.dqn import batch_wrapper, Phi
 
 from sources.replay_buffer import replay_buffer
-<<<<<<< HEAD
-<<<<<<< HEAD
 from sources.preprocessing import phi
-=======
+
 import matplotlib.pyplot as plt
->>>>>>> cdcde89227cefbf02a91ee115489782569b3604e
-=======
+
 
 from sources.preprocessing import phi
->>>>>>> be7a7e61de86d28d02df87e99b501992d8450582
 
 
 # env = gym.make('CartPole-v0')
@@ -113,12 +109,5 @@ for episode in range(0, num_episode):
 
         if done:
             break
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-    print('episode:', episode, 'return', G)
->>>>>>> cdcde89227cefbf02a91ee115489782569b3604e
-=======
 
     print('episode:', episode, 'return', G)
->>>>>>> be7a7e61de86d28d02df87e99b501992d8450582
