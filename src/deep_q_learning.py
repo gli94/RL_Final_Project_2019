@@ -21,7 +21,7 @@ from sources.preprocessing import phi
 env = gym.make('Boxing-v0')
 
 # Hyper Parameters
-num_episode = 400
+num_episode = 2
 BATCH_SIZE = 32
 CAPACITY_SIZE = 10000
 GAMMA = 0.99
@@ -52,6 +52,8 @@ Q = DQN(state_dim=STATE_DIM,
 
 # Initialize the behavior policy
 # pi = epsilon_greedy(Q)
+Return = np.array([])
+Loss = np.array([])
 
 for episode in range(0, num_episode):
     x = env.reset()  # first frame
@@ -104,8 +106,8 @@ for episode in range(0, num_episode):
 
         targetBatch = (nextQ_Batch * GAMMA) + rewardBatch     # size[N, 1]
 
-        Q.update(phiBatch, actionBatch, targetBatch)
-
+        loss: float = Q.update(phiBatch, actionBatch, targetBatch)
+        Loss = np.append(Loss, loss)
         #############################
         # shape indicator
         # shape1 = phiBatch.size()
@@ -121,4 +123,8 @@ for episode in range(0, num_episode):
             break
 
     print('episode:', episode, 'return', G)
+    Return = np.append(Return, G)
+
+np.savetxt('Return.out', Return, delimiter=' ')
+np.savetxt('Loss.out', Loss, delimiter=' ')
 
