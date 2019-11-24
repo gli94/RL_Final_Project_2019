@@ -1,5 +1,7 @@
 import torch
 import numpy as np
+from skimage.color import rgb2gray
+from skimage.transform import resize
 
 def phi(seq,
         stack_num=4,
@@ -8,7 +10,7 @@ def phi(seq,
         
     """
     Assume the input image size is (210, 160, 3)
-    Use avg_pool
+    Use skimage package to process image: rgb2gray and resize
     """
     img_shape = np.shape(seq[-1])
     img_stack = np.zeros((stack_num, stack_img_h, stack_img_w))
@@ -17,7 +19,7 @@ def phi(seq,
     stride_h = filter_h
     stride_w = filter_w
     
-    current_gray_image = np.zeros((img_shape[0], img_shape[1]))
+    #current_gray_image = np.zeros((img_shape[0], img_shape[1]))
     current_processed_img = np.zeros((stack_img_h, stack_img_w))
     
     if 2 * stack_num - 1 > len(seq):
@@ -29,11 +31,13 @@ def phi(seq,
     for idx in range(1, 1+2*stack_num_return, 2):
         current_frame = seq[0-idx]
         
+        '''
         if len(seq) > 1:
             prev_frame = seq[0-(idx+2)]
         else:
             prev_frame = np.zeros(img_shape)
-        
+       
+       
         for i in range(img_shape[0]):
             for j in range(img_shape[1]):
                 current_frame[i][j][0] = max(current_frame[i][j][0], prev_frame[i][j][0])
@@ -58,7 +62,8 @@ def phi(seq,
                     pixel_block[0:img_shape[0] - ii * stride_h, 0:img_shape[1] - jj * stride_w] = current_gray_image[ii * stride_h : img_shape[0], jj * stride_w : img_shape[1]]
                     
                 current_processed_img[ii][jj] = pixel_block.sum()/pixel_block.size
-
+        '''
+        current_processed_img = resize(rgb2gray(current_frame), (stack_img_h, stack_img_w), anti_aliasing=True)
         img_stack[np.int64((idx-1)/2)] = current_processed_img
     
     return img_stack

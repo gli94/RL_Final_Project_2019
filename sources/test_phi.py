@@ -6,7 +6,7 @@
 #	env.step(env.action_space.sample())
 #env.close()
 
-from sources.preprocessing import phi
+from preprocessing import phi
 import numpy as np
 import torch
 import gym
@@ -21,6 +21,9 @@ state = env.reset()
 print(state.shape)
 
 seq = [state]
+
+print(state[:,:,2])
+
 b = phi(seq,1)
 print(b)
 print(b.shape)
@@ -34,7 +37,7 @@ for _ in range(100):
 
 print(len(seq))
 
-b = phi(seq, 1)
+b = phi(seq, 4, 28, 28)
 
 print(b)
 print(b.shape)
