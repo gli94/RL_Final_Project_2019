@@ -13,6 +13,9 @@ from sources.replay_buffer import replay_buffer
 from sources.preprocessing import phi
 import matplotlib.pyplot as plt
 from sources.preprocessing import phi
+import matplotlib.pyplot as plt
+from sources.preprocessing import phi
+
 
 # env = gym.make('CartPole-v0')
 env = gym.make('Boxing-v0')
