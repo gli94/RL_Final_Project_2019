@@ -73,7 +73,7 @@ for episode in range(0, num_episode):
         # start_time = time.time()
         p = phi(s, 4, HEIGHT, WIDTH)
         # print("\r--- %s seconds ---" % (time.time() - start_time))
-        # env.render()
+        env.render()
 
         a = Q.epsilon_greedy(p)
         x, r, done, _ = env.step(a)

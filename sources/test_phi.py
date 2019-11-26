@@ -28,7 +28,7 @@ b = phi(seq,1)
 print(b)
 print(b.shape)
 
-for _ in range(100):
+for _ in range(5000):
     env.render()
     action = env.action_space.sample()
     seq.append(action)
@@ -38,8 +38,9 @@ for _ in range(100):
 print(len(seq))
 
 b = phi(seq, 4, 28, 28)
-
 print(b)
+print(b.max())
+print(b.min())
 print(b.shape)
     
 
