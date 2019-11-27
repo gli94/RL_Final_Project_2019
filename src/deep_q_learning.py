@@ -7,14 +7,19 @@ import numpy as np
 import gym
 from itertools import count
 import time
-from src.dqn import DQN
-from src.dqn import batch_wrapper, Phi
-from sources.replay_buffer import replay_buffer
-from sources.preprocessing import phi
+
+from dqn import DQN
+from dqn import batch_wrapper, Phi
+
+import sys
+sys.path.append('../sources')
+
+from replay_buffer import replay_buffer
+from preprocessing import phi
 import matplotlib.pyplot as plt
-from sources.preprocessing import phi
+from preprocessing import phi
 import matplotlib.pyplot as plt
-from sources.preprocessing import phi
+from preprocessing import phi
 
 
 # env = gym.make('CartPole-v0')
