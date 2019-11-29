@@ -6,7 +6,7 @@ from skimage.transform import resize
 def phi(seq,
         stack_num=4,
         stack_img_h=84,
-        stack_img_w=84
+        stack_img_w=84,
         device=torch.device("cpu")):
         
     """
