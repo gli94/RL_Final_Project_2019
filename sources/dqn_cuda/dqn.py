@@ -112,13 +112,13 @@ class DQN(object):
         """
         # phi = torch.unsqueeze(torch.FloatTensor(phi), 0)
         # action = torch.unsqueeze(action, 0)
-        nnOuput = self.evalNet(phi)
-        q_values = self.evalNet(phi).gather(1, action)
+        #nnOuput = self.evalNet(phi)
+        q_values = self.evalNet(phi.to(self.device)).gather(1, action)
         return q_values
 
     def target(self, phi, action):
         # phi = torch.unsqueeze(torch.FloatTensor(phi), 0)
-        q_values = self.targetNet(phi).gather(1, action)
+        q_values = self.targetNet(phi.to(self.device)).gather(1, action)
         return q_values
 
     def update(self,
@@ -129,12 +129,9 @@ class DQN(object):
             self.targetNet.load_state_dict(self.evalNet.state_dict())
         self.learnCounter  = (self.learnCounter + 1) % self.C
         
-        phiBatch.to(self.device)
-        actionBatch.to(self.device)
-        targetBatch.to(self.device)
 
-        prediction = self.eval(phiBatch, actionBatch)
-        loss = self.loss_func(prediction, targetBatch)
+        prediction = self.eval(phiBatch.to(self.device), actionBatch.to(self.device))
+        loss = self.loss_func(prediction, targetBatch.to(self.device))
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
@@ -145,10 +142,9 @@ class DQN(object):
         # TODO: use a decaying epsilon
         phi = torch.from_numpy(phi).type(torch.FloatTensor)
         phi = phi.unsqueeze(0)
-        phi.to(self.device)
 
         if np.random.rand() > epsilon:
-            action_value = self.evalNet(phi)
+            action_value = self.evalNet(phi.to(delf.device))
             value, action = action_value.max(1)
             action = action.item()
         else:
