@@ -26,7 +26,7 @@ from preprocessing import phi
 env = gym.make('Boxing-v0')
 
 # Hyper Parameters
-num_episode = 2
+num_episode = 1000
 BATCH_SIZE = 32
 CAPACITY_SIZE = 10000
 GAMMA = 0.99
@@ -148,7 +148,8 @@ for episode in range(0, num_episode):
 
         if done:
             break
-
+            
+    print("\n")
     print('episode:', episode, 'return', G)
     return_per_episode[episode] = G
     print("One episode takes: %s seconds " % (time.time() - start_time))
