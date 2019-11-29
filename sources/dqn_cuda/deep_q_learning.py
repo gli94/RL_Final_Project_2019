@@ -114,7 +114,7 @@ for episode in range(0, num_episode):
 
         # Q_value update: if next phi terminates, target is reward; else is reward + gamma * max(Q(phi_next, a'))
         nonFinalMask = torch.tensor(tuple(map(lambda m: m is not True, doneBatch)), dtype=torch.bool).to(device) # bool tensor [N]
-        nextQ_Batch = torch.zeros(phiBatch.size()[0])
+        nextQ_Batch = torch.zeros(phiBatch.size()[0]).to(device)
         nextQ_Batch = torch.unsqueeze(nextQ_Batch, 1)      # nextQ_Batch shape(N, 1)
 
         nnInput = phiNextBatch[nonFinalMask].float()       # shape[N, 1], select non-terminal next state phi
