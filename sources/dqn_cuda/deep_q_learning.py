@@ -87,7 +87,7 @@ for episode in range(0, num_episode):
             continue
 
         start_time = time.time()
-        p = phi(s, 4, HEIGHT, WIDTH)
+        p = phi(s, 4, HEIGHT, WIDTH, device)
         print("\rPhi takes: %s seconds " % (time.time() - start_time))
         #env.render()
 
@@ -100,7 +100,7 @@ for episode in range(0, num_episode):
         s.append(torch.from_numpy(x))      # get s_{t+1}
 
         start_time = time.time()
-        p_next = phi(s, 4, HEIGHT, WIDTH)
+        p_next = phi(s, 4, HEIGHT, WIDTH, device)
         print("\rPhi takes: %s seconds " % (time.time() - start_time))
 
         buffer.store(p, a, r, p_next, done)
