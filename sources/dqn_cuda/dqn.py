@@ -144,7 +144,7 @@ class DQN(object):
         phi = phi.unsqueeze(0)
 
         if np.random.rand() > epsilon:
-            action_value = self.evalNet(phi.to(delf.device))
+            action_value = self.evalNet(phi.to(self.device))
             value, action = action_value.max(1)
             action = action.item()
         else:
