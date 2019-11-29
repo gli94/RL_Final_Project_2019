@@ -106,6 +106,12 @@ for episode in range(0, num_episode):
         buffer.store(p, a, r, p_next, done)
         transBatch = buffer.sample(BATCH_SIZE)     # get a np.array
         phiBatch, actionBatch, rewardBatch, phiNextBatch, doneBatch = batch_wrapper(transBatch)  # retrieve tensor batch
+        
+        phiBatch = phiBatch.to(device)
+        actionBatch = actionBatch.to(device)
+        rewardBatch = rewardBatch.to(device)
+        phiNextBatch = phiNextBatch.to(device)
+        doneBatch = doneBatch.to(device)
 
         # Q_value update: if next phi terminates, target is reward; else is reward + gamma * max(Q(phi_next, a'))
         nonFinalMask = torch.tensor(tuple(map(lambda m: m is not True, doneBatch)), dtype=torch.bool) # bool tensor [N]
@@ -114,7 +120,7 @@ for episode in range(0, num_episode):
 
         nnInput = phiNextBatch[nonFinalMask].float()       # shape[N, 1], select non-terminal next state phi
         start_time = time.time()
-        nnOutput = Q.targetNet(nnInput.to(device))                    # size[N, 1]
+        nnOutput = Q.targetNet(nnInput)                    # size[N, 1]
         print("\rTarget net inference takes: %s seconds " % (time.time() - start_time))
 
         nextQ_max = nnOutput.max(1)[0].detach()
