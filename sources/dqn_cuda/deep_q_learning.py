@@ -114,7 +114,7 @@ for episode in range(0, num_episode):
 
         nnInput = phiNextBatch[nonFinalMask].float()       # shape[N, 1], select non-terminal next state phi
         start_time = time.time()
-        nnOutput = Q.targetNet(nnInput)                    # size[N, 1]
+        nnOutput = Q.targetNet(nnInput.to(device))                    # size[N, 1]
         print("\rTarget net inference takes: %s seconds " % (time.time() - start_time))
 
         nextQ_max = nnOutput.max(1)[0].detach()
