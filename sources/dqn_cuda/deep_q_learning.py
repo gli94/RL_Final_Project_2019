@@ -83,11 +83,11 @@ for episode in range(0, num_episode):
             a = np.random.randint(0, N_ACTIONS)
             x, r, done, _ = env.step(a)
             s.append(a)
-            s.append(torch.from_numpy(x))
+            s.append(x)
             continue
 
         start_time = time.time()
-        p = phi(s, 4, HEIGHT, WIDTH, device)
+        p = phi(s, 4, HEIGHT, WIDTH)
         print("\rPhi takes: %s seconds " % (time.time() - start_time))
         #env.render()
 
@@ -97,10 +97,10 @@ for episode in range(0, num_episode):
         # TODO: reward clipping
         G += r
         s.append(a)      # can't quite get why a is stored into the sequence
-        s.append(torch.from_numpy(x))      # get s_{t+1}
+        s.append(x)      # get s_{t+1}
 
         start_time = time.time()
-        p_next = phi(s, 4, HEIGHT, WIDTH, device)
+        p_next = phi(s, 4, HEIGHT, WIDTH)
         print("\rPhi takes: %s seconds " % (time.time() - start_time))
 
         buffer.store(p, a, r, p_next, done)
