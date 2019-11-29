@@ -8,7 +8,7 @@
 #SBATCH --mail-user=lige@utexas.edu
 #SBATCH --mail-type=begin   # email me when the job starts
 #SBATCH --mail-type=end     # email me when the job finishes
-#SBATCH -A CS394R
+
 
 module load intel/17.0.4 python3/3.6.3
 module load cuda/10.0 cudnn/7.6.2 nccl/2.4.7
