@@ -26,7 +26,7 @@ from preprocessing import phi
 env = gym.make('Boxing-v0')
 
 # Hyper Parameters
-num_episode = 400
+num_episode = 2
 BATCH_SIZE = 32
 CAPACITY_SIZE = 10000
 GAMMA = 0.99
@@ -37,8 +37,9 @@ STATE_DIM = env.observation_space.shape[0]
 HEIGHT = 28
 WIDTH = 28
 
-USE_GPU = False
+USE_GPU = True
 
+return_per_episode = np.zeros(num_episode)
 
 # Initialize the pre-processing function phi
 # phi = Phi()
@@ -70,6 +71,7 @@ Q = DQN(state_dim=STATE_DIM,
 # pi = epsilon_greedy(Q)
 
 for episode in range(0, num_episode):
+    start_time = time.time()
     x = env.reset()  # first frame
     # img = plt.imshow(env.render(mode='rgb_array'))  # only call this once
 
@@ -86,9 +88,9 @@ for episode in range(0, num_episode):
             s.append(x)
             continue
 
-        start_time = time.time()
+        #start_time = time.time()
         p = phi(s, 4, HEIGHT, WIDTH)
-        print("\rPhi takes: %s seconds " % (time.time() - start_time))
+        #print("\rPhi takes: %s seconds " % (time.time() - start_time))
         #env.render()
 
         a = Q.epsilon_greedy(p)
@@ -99,9 +101,9 @@ for episode in range(0, num_episode):
         s.append(a)      # can't quite get why a is stored into the sequence
         s.append(x)      # get s_{t+1}
 
-        start_time = time.time()
+        #start_time = time.time()
         p_next = phi(s, 4, HEIGHT, WIDTH)
-        print("\rPhi takes: %s seconds " % (time.time() - start_time))
+        #print("\rPhi takes: %s seconds " % (time.time() - start_time))
 
         buffer.store(p, a, r, p_next, done)
         transBatch = buffer.sample(BATCH_SIZE)     # get a np.array
@@ -118,9 +120,9 @@ for episode in range(0, num_episode):
         nextQ_Batch = torch.unsqueeze(nextQ_Batch, 1)      # nextQ_Batch shape(N, 1)
 
         nnInput = phiNextBatch[nonFinalMask].float()       # shape[N, 1], select non-terminal next state phi
-        start_time = time.time()
+        #start_time = time.time()
         nnOutput = Q.targetNet(nnInput)                    # size[N, 1]
-        print("\rTarget net inference takes: %s seconds " % (time.time() - start_time))
+        #print("\rTarget net inference takes: %s seconds " % (time.time() - start_time))
 
         nextQ_max = nnOutput.max(1)[0].detach()
         nextQ_max = torch.unsqueeze(nextQ_max, 1)                  # size[N, 1]
@@ -129,9 +131,9 @@ for episode in range(0, num_episode):
 
         targetBatch = (nextQ_Batch * GAMMA) + rewardBatch     # size[N, 1]
         
-        start_time = time.time()
+        #start_time = time.time()
         Q.update(phiBatch, actionBatch, targetBatch)
-        print("\rEval net train takes: %s seconds " % (time.time() - start_time))
+        #print("\rEval net train takes: %s seconds " % (time.time() - start_time))
 
         #############################
         # shape indicator
@@ -148,4 +150,13 @@ for episode in range(0, num_episode):
             break
 
     print('episode:', episode, 'return', G)
+    return_per_episode[episode] = G
+    print("One episode takes: %s seconds " % (time.time() - start_time))
+
+PATH = './dqn_eval_net.pth'
+torch.save(Q.evalNet.state_dict(), PATH)
+
+with open('return_per_episode.txt', 'w') as f:
+    for item in return_per_episode:
+        f.write("%s\n" % item)
 
