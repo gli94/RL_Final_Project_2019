@@ -83,7 +83,7 @@ for episode in range(0, num_episode):
             a = np.random.randint(0, N_ACTIONS)
             x, r, done, _ = env.step(a)
             s.append(a)
-            s.append(x)
+            s.append(torch.from_numpy(x))
             continue
 
         start_time = time.time()
@@ -97,7 +97,7 @@ for episode in range(0, num_episode):
         # TODO: reward clipping
         G += r
         s.append(a)      # can't quite get why a is stored into the sequence
-        s.append(x)      # get s_{t+1}
+        s.append(torch.from_numpy(x))      # get s_{t+1}
 
         start_time = time.time()
         p_next = phi(s, 4, HEIGHT, WIDTH)

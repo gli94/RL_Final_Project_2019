@@ -38,7 +38,7 @@ def phi(seq,
         img_stack[np.int64((idx-1)/2)] = current_processed_img
         
     
-    return ((img_stack-0.5)/0.5).numpy
+    return ((img_stack-0.5)/0.5).numpy()
                 
         
         
