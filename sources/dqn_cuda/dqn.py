@@ -6,6 +6,7 @@ import numpy as np
 import gym
 from collections import namedtuple
 
+
 Transition = namedtuple('Transition', ('phi', 'action', 'reward', 'phi_next', 'done'))
 
 
@@ -78,7 +79,8 @@ class DQN(object):
                  alpha=0.01,
                  C=4,
                  height=84,
-                 width=84):
+                 width=84,
+                 device=torch.device("cpu")):
 
         self.state_dim = state_dim
         self.num_action = num_action
@@ -88,6 +90,11 @@ class DQN(object):
 
         self.targetNet = ConvNet(num_action, height, width)
         self.evalNet = ConvNet(num_action, height, width)
+        
+        self.targetNet.to(device)
+        self.evalNet.to(device)
+        
+        self.device = device
 
         self.learnCounter = 0
         self.C = C          # Every C steps we clone evalNet to be targetNet
@@ -121,6 +128,10 @@ class DQN(object):
         if self.learnCounter == 0:
             self.targetNet.load_state_dict(self.evalNet.state_dict())
         self.learnCounter  = (self.learnCounter + 1) % self.C
+        
+        phiBatch.to(self.device)
+        actionBatch.to(self.device)
+        targetBatch.to(self.device)
 
         prediction = self.eval(phiBatch, actionBatch)
         loss = self.loss_func(prediction, targetBatch)

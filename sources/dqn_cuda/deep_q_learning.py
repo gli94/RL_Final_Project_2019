@@ -37,6 +37,8 @@ STATE_DIM = env.observation_space.shape[0]
 HEIGHT = 28
 WIDTH = 28
 
+USE_GPU = True
+
 
 # Initialize the pre-processing function phi
 # phi = Phi()
@@ -47,13 +49,22 @@ buffer = replay_buffer(CAPACITY_SIZE)
 # Initialize the targetNet and evalNet
 # state_dim = (84, 84, 4)
 # num_action = 18
+        
+if USE_GPU:
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+else:
+    device = torch.device("cpu")
+    
+print(device)
 
 Q = DQN(state_dim=STATE_DIM,
         num_action=N_ACTIONS,
         alpha=ALPHA,
         C=C,
         height=HEIGHT,
-        width=WIDTH)
+        width=WIDTH,
+        device=device)
+        
 
 # Initialize the behavior policy
 # pi = epsilon_greedy(Q)
@@ -75,9 +86,9 @@ for episode in range(0, num_episode):
             s.append(x)
             continue
 
-        # start_time = time.time()
+        start_time = time.time()
         p = phi(s, 4, HEIGHT, WIDTH)
-        # print("\r--- %s seconds ---" % (time.time() - start_time))
+        print("\rPhi takes: %s seconds " % (time.time() - start_time))
         #env.render()
 
         a = Q.epsilon_greedy(p)
@@ -88,7 +99,9 @@ for episode in range(0, num_episode):
         s.append(a)      # can't quite get why a is stored into the sequence
         s.append(x)      # get s_{t+1}
 
+        start_time = time.time()
         p_next = phi(s, 4, HEIGHT, WIDTH)
+        print("\rPhi takes: %s seconds " % (time.time() - start_time))
 
         buffer.store(p, a, r, p_next, done)
         transBatch = buffer.sample(BATCH_SIZE)     # get a np.array
@@ -100,7 +113,9 @@ for episode in range(0, num_episode):
         nextQ_Batch = torch.unsqueeze(nextQ_Batch, 1)      # nextQ_Batch shape(N, 1)
 
         nnInput = phiNextBatch[nonFinalMask].float()       # shape[N, 1], select non-terminal next state phi
+        start_time = time.time()
         nnOutput = Q.targetNet(nnInput)                    # size[N, 1]
+        print("\rTarget net inference takes: %s seconds " % (time.time() - start_time))
 
         nextQ_max = nnOutput.max(1)[0].detach()
         nextQ_max = torch.unsqueeze(nextQ_max, 1)                  # size[N, 1]
@@ -108,8 +123,10 @@ for episode in range(0, num_episode):
         nextQ_Batch[nonFinalMask] = nextQ_max
 
         targetBatch = (nextQ_Batch * GAMMA) + rewardBatch     # size[N, 1]
-
+        
+        start_time = time.time()
         Q.update(phiBatch, actionBatch, targetBatch)
+        print("\rEval net train takes: %s seconds " % (time.time() - start_time))
 
         #############################
         # shape indicator
