@@ -145,6 +145,7 @@ class DQN(object):
         # TODO: use a decaying epsilon
         phi = torch.from_numpy(phi).type(torch.FloatTensor)
         phi = phi.unsqueeze(0)
+        phi.to(self.device)
 
         if np.random.rand() > epsilon:
             action_value = self.evalNet(phi)
