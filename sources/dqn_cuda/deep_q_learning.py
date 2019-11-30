@@ -11,8 +11,8 @@ import time
 from dqn import DQN
 from dqn import batch_wrapper, Phi
 
-import sys
-sys.path.append('../sources')
+#import sys
+#sys.path.append('../sources')
 
 from replay_buffer import replay_buffer
 from preprocessing import phi
@@ -26,7 +26,7 @@ from preprocessing import phi
 env = gym.make('Boxing-v0')
 
 # Hyper Parameters
-num_episode = 2
+num_episode = 1000
 BATCH_SIZE = 32
 CAPACITY_SIZE = 10000
 GAMMA = 0.99
@@ -37,6 +37,9 @@ STATE_DIM = env.observation_space.shape[0]
 HEIGHT = 28
 WIDTH = 28
 
+USE_GPU = True
+
+return_per_episode = np.zeros(num_episode)
 
 # Initialize the pre-processing function phi
 # phi = Phi()
@@ -47,20 +50,28 @@ buffer = replay_buffer(CAPACITY_SIZE)
 # Initialize the targetNet and evalNet
 # state_dim = (84, 84, 4)
 # num_action = 18
+        
+if USE_GPU:
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+else:
+    device = torch.device("cpu")
+    
+print(device)
 
 Q = DQN(state_dim=STATE_DIM,
         num_action=N_ACTIONS,
         alpha=ALPHA,
         C=C,
         height=HEIGHT,
-        width=WIDTH)
+        width=WIDTH,
+        device=device)
+        
 
 # Initialize the behavior policy
 # pi = epsilon_greedy(Q)
-Return = np.array([])
-Loss = np.array([])
 
 for episode in range(0, num_episode):
+    start_time = time.time()
     x = env.reset()  # first frame
     # img = plt.imshow(env.render(mode='rgb_array'))  # only call this once
 
@@ -77,10 +88,10 @@ for episode in range(0, num_episode):
             s.append(x)
             continue
 
-        # start_time = time.time()
+        #start_time = time.time()
         p = phi(s, 4, HEIGHT, WIDTH)
-        # print("\r--- %s seconds ---" % (time.time() - start_time))
-        env.render()
+        #print("\rPhi takes: %s seconds " % (time.time() - start_time))
+        #env.render()
 
         a = Q.epsilon_greedy(p)
         x, r, done, _ = env.step(a)
@@ -90,19 +101,28 @@ for episode in range(0, num_episode):
         s.append(a)      # can't quite get why a is stored into the sequence
         s.append(x)      # get s_{t+1}
 
+        #start_time = time.time()
         p_next = phi(s, 4, HEIGHT, WIDTH)
+        #print("\rPhi takes: %s seconds " % (time.time() - start_time))
 
         buffer.store(p, a, r, p_next, done)
         transBatch = buffer.sample(BATCH_SIZE)     # get a np.array
         phiBatch, actionBatch, rewardBatch, phiNextBatch, doneBatch = batch_wrapper(transBatch)  # retrieve tensor batch
+        
+        phiBatch = phiBatch.to(device)
+        actionBatch = actionBatch.to(device)
+        rewardBatch = rewardBatch.to(device)
+        phiNextBatch = phiNextBatch.to(device)
 
         # Q_value update: if next phi terminates, target is reward; else is reward + gamma * max(Q(phi_next, a'))
-        nonFinalMask = torch.tensor(tuple(map(lambda m: m is not True, doneBatch)), dtype=torch.bool) # bool tensor [N]
-        nextQ_Batch = torch.zeros(phiBatch.size()[0])
+        nonFinalMask = torch.tensor(tuple(map(lambda m: m is not True, doneBatch)), dtype=torch.bool).to(device) # bool tensor [N]
+        nextQ_Batch = torch.zeros(phiBatch.size()[0]).to(device)
         nextQ_Batch = torch.unsqueeze(nextQ_Batch, 1)      # nextQ_Batch shape(N, 1)
 
         nnInput = phiNextBatch[nonFinalMask].float()       # shape[N, 1], select non-terminal next state phi
+        #start_time = time.time()
         nnOutput = Q.targetNet(nnInput)                    # size[N, 1]
+        #print("\rTarget net inference takes: %s seconds " % (time.time() - start_time))
 
         nextQ_max = nnOutput.max(1)[0].detach()
         nextQ_max = torch.unsqueeze(nextQ_max, 1)                  # size[N, 1]
@@ -110,9 +130,11 @@ for episode in range(0, num_episode):
         nextQ_Batch[nonFinalMask] = nextQ_max
 
         targetBatch = (nextQ_Batch * GAMMA) + rewardBatch     # size[N, 1]
+        
+        #start_time = time.time()
+        Q.update(phiBatch, actionBatch, targetBatch)
+        #print("\rEval net train takes: %s seconds " % (time.time() - start_time))
 
-        loss: float = Q.update(phiBatch, actionBatch, targetBatch)
-        Loss = np.append(Loss, loss)
         #############################
         # shape indicator
         # shape1 = phiBatch.size()
@@ -126,10 +148,16 @@ for episode in range(0, num_episode):
 
         if done:
             break
-
+            
+    print("\n")
     print('episode:', episode, 'return', G)
-    Return = np.append(Return, G)
+    return_per_episode[episode] = G
+    print("One episode takes: %s seconds " % (time.time() - start_time))
 
-np.savetxt('Return.out', Return, delimiter=' ')
-np.savetxt('Loss.out', Loss, delimiter=' ')
+PATH = './dqn_eval_net.pth'
+torch.save(Q.evalNet.state_dict(), PATH)
+
+with open('return_per_episode.txt', 'w') as f:
+    for item in return_per_episode:
+        f.write("%s\n" % item)
 

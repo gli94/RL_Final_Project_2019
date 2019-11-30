@@ -66,8 +66,9 @@ def phi(seq,
         current_frame = np.maximum(current_frame, prev_frame)
         current_processed_img = resize(rgb2gray(current_frame), (stack_img_h, stack_img_w), anti_aliasing=True)
         img_stack[np.int64((idx-1)/2)] = current_processed_img
+        
     
-    return img_stack
+    return (img_stack-0.5)/0.5
                 
         
         
