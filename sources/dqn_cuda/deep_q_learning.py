@@ -26,18 +26,19 @@ from preprocessing import phi
 env = gym.make('Boxing-v0')
 
 # Hyper Parameters
-num_episode = 1000
+num_episode = 10
 BATCH_SIZE = 32
-CAPACITY_SIZE = 20000
+CAPACITY_SIZE = 25000
 GAMMA = 0.99
 ALPHA = 0.0001
-C = 500
+C = 5000
+
 N_ACTIONS = env.action_space.n
 STATE_DIM = env.observation_space.shape[0]
 HEIGHT = 28
 WIDTH = 28
 
-USE_GPU = False
+USE_GPU = True
 
 return_per_episode = np.zeros(num_episode)
 
