@@ -115,18 +115,19 @@ class DQN(object):
         return q_values
 
     def update(self,
-               phiBatch: torch.Tensor,
-               actionBatch: torch.Tensor,
-               targetBatch: torch.Tensor):
+               phiBatch: torch.tensor,
+               actionBatch: torch.tensor,
+               targetBatch: torch.tensor) -> float:
         if self.learnCounter == 0:
             self.targetNet.load_state_dict(self.evalNet.state_dict())
-        self.learnCounter  = (self.learnCounter + 1) % self.C
+        self.learnCounter = (self.learnCounter + 1) % self.C
 
         prediction = self.eval(phiBatch, actionBatch)
         loss = self.loss_func(prediction, targetBatch)
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
+        return loss.item()
 
     def epsilon_greedy(self,
                        phi,
