@@ -5,6 +5,7 @@ import torch.nn.functional as F
 import numpy as np
 import gym
 from collections import namedtuple
+from replay_buffer import replay_buffer
 
 
 Transition = namedtuple('Transition', ('phi', 'action', 'reward', 'phi_next', 'done'))
@@ -35,6 +36,33 @@ class Net(nn.Module):
         action_values = self.out(x)
         return action_values
 
+
+class RamNet(nn.Module):
+    def __init__(self,
+                 state_dim=(84, 84, 4),
+                 num_action=18):
+        """
+        state_dim: nn input dimension which is (84, 84, 4)
+        num_action: number of possible actions, 4 - 18 for Atari
+        """
+
+        super(RamNet, self).__init__()
+        self.fc1 = nn.Linear(state_dim, 256)
+        self.fc2 = nn.Linear(256, 128)
+        self.fc3 = nn.Linear(128, 64)
+        self.fc4 = nn.Linear(64, num_action)
+
+    def forward(self,
+                x: torch.Tensor):
+        """
+        phi: nn input dimension, shape being [84, 84, 4]
+        """
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = F.relu(self.fc3(x))
+        action_values = self.fc4(x)
+        return action_values
+
 # First Convolution Layer: 16 8x8 filters with stride 4
 # ReLu
 # Second Convolution Layer: 32 4x4 filters with stride 2
@@ -42,15 +70,17 @@ class Net(nn.Module):
 # Third FC Layer: 256 units
 # ReLu
 # Ouput Layer: output units = num_action
+
+
 class ConvNet(nn.Module):
     def __init__(self, num_action, height, width):
         super(ConvNet, self).__init__()
         self.conv1 = nn.Conv2d(in_channels=4, out_channels=32, kernel_size=8, stride=4)
-        self.bn1 = nn.BatchNorm2d(32)
+        #self.bn1 = nn.BatchNorm2d(32)
         self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2)
-        self.bn2 = nn.BatchNorm2d(64)
+        #self.bn2 = nn.BatchNorm2d(64)
         self.conv3 = nn.Conv2d(in_channels=64, out_channels=64, kernel_size=3, stride=1)
-        self.bn3 = nn.BatchNorm2d(64)
+        #self.bn3 = nn.BatchNorm2d(64)
 
         # compute the size of input to the fully connected layer
         def conv2d_size_out(size, kernel_size=6, stride=2):
@@ -65,14 +95,14 @@ class ConvNet(nn.Module):
         self.conv_width = conv_width
 
     def forward(self, x):
-        x = F.relu(self.bn1(self.conv1(x)))
-        x = F.relu(self.bn2(self.conv2(x)))
-        x = F.relu(self.bn3(self.conv3(x)))
-        x = x.view(-1, 64 * self.conv_height * self.conv_width)
-        x = F.relu(self.fc1(x))
-        x = self.output(x)
+       x = F.relu(self.conv1(x))
+       x = F.relu(self.conv2(x))
+       x = F.relu(self.conv3(x))
+       x = x.view(-1, 64 * self.conv_height * self.conv_width)
+       x = F.relu(self.fc1(x))
+       x = self.output(x)
 
-        return x
+       return x
 
 
 class DQN(object):
@@ -88,8 +118,8 @@ class DQN(object):
         self.state_dim = state_dim
         self.num_action = num_action
 
-        # self.targetNet = Net(state_dim, num_action)
-        # self.evalNet = Net(state_dim, num_action)
+        #self.targetNet = RamNet(state_dim, num_action)
+        #self.evalNet = RamNet(state_dim, num_action)
 
         self.targetNet = ConvNet(num_action, height, width)
         self.evalNet = ConvNet(num_action, height, width)
@@ -130,8 +160,7 @@ class DQN(object):
                targetBatch: torch.Tensor):
         if self.learnCounter == 0:
             self.targetNet.load_state_dict(self.evalNet.state_dict())
-        self.learnCounter  = (self.learnCounter + 1) % self.C
-        
+        self.learnCounter = (self.learnCounter + 1) % self.C
 
         prediction = self.eval(phiBatch.to(self.device), actionBatch.to(self.device))
         loss = self.loss_func(prediction, targetBatch.to(self.device))
@@ -139,12 +168,23 @@ class DQN(object):
         loss.backward()
         self.optimizer.step()
 
+        return loss.item()
+
     def epsilon_greedy(self,
                        phi,
-                       epsilon=0.1):
+                       epsilon_start=1,
+                       epsilon_end=0.1,
+                       decay_steps=1000000,
+                       total_t=0):
         # TODO: use a decaying epsilon
         phi = torch.from_numpy(phi).type(torch.FloatTensor)
         phi = phi.unsqueeze(0)
+
+        delta = (epsilon_start - epsilon_end) / decay_steps
+        if epsilon_start - delta * total_t > epsilon_end:
+            epsilon = epsilon_start - delta * total_t
+        else:
+            epsilon = epsilon_end
 
         if np.random.rand() > epsilon:
             action_value = self.evalNet(phi.to(self.device))
@@ -152,10 +192,11 @@ class DQN(object):
             action = action.item()
         else:
             action = np.random.randint(0, self.num_action)
-        return action
+        return action, epsilon
 
 
-def batch_wrapper(transBatch: np.array
+def batch_wrapper(transBatch: np.array,
+                  device=torch.device("cpu")
                   ):
     """
     inp:
@@ -196,6 +237,11 @@ def batch_wrapper(transBatch: np.array
 
     doneBatch = batch.done
 
+    phiBatch = phiBatch.to(device)
+    actionBatch = actionBatch.to(device)
+    rewardBatch = rewardBatch.to(device)
+    phiNextBatch = phiNextBatch.to(device)
+
     return phiBatch, actionBatch, rewardBatch, phiNextBatch, doneBatch
 
 
@@ -203,7 +249,52 @@ def Phi(s):
     # p = torch.from_numpy(s[-1]).type(torch.FloatTensor)
     # p = torch.tensor(s[-1])
     p = s[-1]
+    p = p/255
     return p
+
+
+def compute_nextQ_batch(Q: DQN,
+                        phiBatch: torch.tensor,
+                        phiNextBatch: torch.tensor,
+                        doneBatch: torch.tensor,
+                        device: torch.device):
+    # Q_value update: if next phi terminates, target is reward; else is reward + gamma * max(Q(phi_next, a'))
+    nonFinalMask = torch.tensor(tuple(map(lambda m: m is not True, doneBatch)), dtype=torch.bool).to(
+        device)                                                # bool tensor [N]
+    nextQ_Batch = torch.zeros(phiBatch.size()[0]).to(device)
+    nextQ_Batch = torch.unsqueeze(nextQ_Batch, 1)              # nextQ_Batch shape(N, 1)
+
+    nnInput = phiNextBatch[nonFinalMask].float().to(device)               # shape[N, 1], select non-terminal next state phi
+
+    nnOutput = Q.targetNet(nnInput)                            # size[N, 1]
+
+    nextQ_max = nnOutput.max(1)[0].detach()
+    nextQ_max = torch.unsqueeze(nextQ_max, 1)  # size[N, 1]
+
+    nextQ_Batch[nonFinalMask] = nextQ_max
+
+    return nextQ_Batch
+
+
+def debug(phiBatch,
+          actionBatch,
+          targetBatch,
+          rewardBatch,
+          nextQ_Batch,
+          s,
+          p):
+    print("\n")
+    print('phiBatch shape :', phiBatch.size())
+    print('actionBatch shape :', actionBatch.size())
+    print('targetBatch shape :', targetBatch.size())
+    print('rewardBatch shape :', rewardBatch.size())
+    print('nextQ_Batch shape :', nextQ_Batch.size())
+    print('sequence length:', len(s))
+    print('network input:', p)
+
+
+
+
 
 
 
