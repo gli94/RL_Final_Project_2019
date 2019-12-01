@@ -261,7 +261,7 @@ def compute_nextQ_batch(Q: DQN,
     nextQ_Batch = torch.zeros(phiBatch.size()[0]).to(device)
     nextQ_Batch = torch.unsqueeze(nextQ_Batch, 1)              # nextQ_Batch shape(N, 1)
 
-    nnInput = phiNextBatch[nonFinalMask].float()               # shape[N, 1], select non-terminal next state phi
+    nnInput = phiNextBatch[nonFinalMask].float().to(device)               # shape[N, 1], select non-terminal next state phi
 
     nnOutput = Q.targetNet(nnInput)                            # size[N, 1]
 

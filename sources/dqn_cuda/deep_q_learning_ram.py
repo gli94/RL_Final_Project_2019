@@ -36,7 +36,7 @@ STATE_DIM = env.observation_space.shape[0]
 HEIGHT = 28
 WIDTH = 28
 
-USE_GPU = False
+USE_GPU = True
 
 # Initialize experience replay buffer
 buffer = replay_buffer(CAPACITY_SIZE)
@@ -107,7 +107,7 @@ for episode in range(0, num_episode):
         # Update evalNet every NUM_SKIP frames
         if t % NUM_SKIP == 0:
             transBatch = buffer.sample(BATCH_SIZE)                                                   # get a np.array
-            phiBatch, actionBatch, rewardBatch, phiNextBatch, doneBatch = batch_wrapper(transBatch)  # tensor batches
+            phiBatch, actionBatch, rewardBatch, phiNextBatch, doneBatch = batch_wrapper(transBatch,device)  # tensor batches
 
             # Q_value update: if next phi terminates, target is reward; else is reward + gamma * max(Q(phi_next, a'))
             nextQ_Batch = compute_nextQ_batch(Q=Q, phiBatch=phiBatch, phiNextBatch=phiNextBatch, doneBatch=doneBatch,
