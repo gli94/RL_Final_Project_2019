@@ -135,10 +135,10 @@ for episode in range(0, num_episode):
     if DEBUG:
         break
             
-    #print("\n")
     if episode % 5 == 0:
         print('episode:', episode, 'return', G)
     return_per_episode[episode] = G
+    print("\n")
     print("One episode takes: %s seconds " % (time.time() - start_time))
 
 PATH = './dqn_eval_net.pth'
