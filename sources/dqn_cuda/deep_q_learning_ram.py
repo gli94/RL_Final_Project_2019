@@ -23,10 +23,10 @@ env = gym.make('Boxing-ram-v0')
 
 # Hyper Parameters
 DEBUG = False
-TOTAL_NUM_STEP = 1000000
-num_episode = 500
+TOTAL_NUM_STEP = 5000000
+num_episode = 2000
 BATCH_SIZE = 32
-CAPACITY_SIZE = 25000
+CAPACITY_SIZE = 50000
 GAMMA = 0.99
 ALPHA = 0.0001
 C = 5000
@@ -65,7 +65,7 @@ if DEBUG:
 
 
 for episode in range(0, num_episode):
-    start_time = time.time()
+    # start_time = time.time()
     x = env.reset()
     s = [x]
     G = 0
@@ -84,7 +84,8 @@ for episode in range(0, num_episode):
         #env.render()
 
         #policy_time = time.time()
-        a, epsilon = Q.epsilon_greedy(phi=p, epsilon_start=1, epsilon_end=0.1, decay_steps=10000, total_t=total_t)
+        if t % NUM_SKIP == 0:
+            a, epsilon = Q.epsilon_greedy(phi=p, epsilon_start=1, epsilon_end=0.1, decay_steps=100000, total_t=total_t)
         #print("\r---policy step time %s s ---" % (time.time() - policy_time))
 
         if DEBUG:
@@ -125,7 +126,7 @@ for episode in range(0, num_episode):
         if total_t > TOTAL_NUM_STEP:
             break
 
-        print("\rt {}".format(t), end="")
+        #print("\rt {}".format(t), end="")
 
         if done:
             break
@@ -134,10 +135,11 @@ for episode in range(0, num_episode):
     if DEBUG:
         break
             
-    print("\n")
-    print('episode:', episode, 'return', G)
+    #print("\n")
+    if episode % 5 == 0:
+        print('episode:', episode, 'return', G)
     return_per_episode[episode] = G
-    print("One episode takes: %s seconds " % (time.time() - start_time))
+    #print("One episode takes: %s seconds " % (time.time() - start_time))
 
 PATH = './dqn_eval_net.pth'
 torch.save(Q.evalNet.state_dict(), PATH)
