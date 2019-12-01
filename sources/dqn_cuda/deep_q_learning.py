@@ -34,8 +34,8 @@ ALPHA = 0.0001
 C = 500
 N_ACTIONS = env.action_space.n
 STATE_DIM = env.observation_space.shape[0]
-HEIGHT = 28
-WIDTH = 28
+HEIGHT = 84
+WIDTH = 84
 
 USE_GPU = False
 
