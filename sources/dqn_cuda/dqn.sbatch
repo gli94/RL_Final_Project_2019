@@ -4,7 +4,7 @@
 #SBATCH -N 1                # total number of node
 #SBATCH -n 1                # total number of mpi tasks requested
 #SBATCH -p gtx              # queue (partition) — normal, development, etc.
-#SBATCH -t 48:00:00         # run time (hh:mm:ss) - 48 hours
+#SBATCH -t 24:00:00         # run time (hh:mm:ss) - 24 hours
 #SBATCH --mail-user=lige@utexas.edu
 #SBATCH --mail-type=begin   # email me when the job starts
 #SBATCH --mail-type=end     # email me when the job finishes
