@@ -37,7 +37,7 @@ STATE_DIM = env.observation_space.shape[0]
 HEIGHT = 84
 WIDTH = 84
 
-USE_GPU = False
+USE_GPU = True
 
 return_per_episode = np.zeros(num_episode)
 
