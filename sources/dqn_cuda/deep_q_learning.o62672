@@ -1,0 +1,7 @@
+
+Inactive Modules:
+  1) python2
+
+The following have been reloaded with a version change:
+  1) impi/18.0.2 => impi/17.0.3     2) intel/18.0.2 => intel/17.0.4
+
