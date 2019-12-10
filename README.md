@@ -61,6 +61,14 @@ cd ./CartPole/A2C
 python A2C.py
 ```
 
+## Train the agent for CartPole with DQN
+
+```
+cd ./CartPole/DQN
+python deep_q_learning.py
+```
+
+
 # Demo Video
 
 If you are insterested, please checkout our [demo video](https://www.youtube.com/watch?v=oluukG7qS0E&feature=youtu.be) for more details.
